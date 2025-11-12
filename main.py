@@ -36,7 +36,8 @@ genderNet = cv2.dnn.readNet(genderModel, genderProto)
 MODEL_MEAN_VALUES = (78.4263377603, 87.7689143744, 114.895847746)
 ageList = ['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
 genderList = ['Laki-laki', 'Perempuan']
-emotionList = ['Senang', 'Netral', 'Kaget', 'Kalem']
+
+moodList = ['Bahagia', 'Santai', 'Serius', 'Lelah']
 
 video = cv2.VideoCapture(0)
 padding = 20
@@ -74,9 +75,9 @@ while True:
         ageNet.setInput(blob)
         age = ageList[ageNet.forward()[0].argmax()]
 
-        emotion = emotionList[int(time.time()) % len(emotionList)]
+        mood = moodList[int(time.time()) % len(moodList)]
 
-        label = f"{gender}, {age}, {emotion}"
+        label = f"{gender}, {age}, {mood}"
 
         color = (255, 0, 0) if gender == 'Laki-laki' else (255, 0, 255)
         cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 2)
@@ -98,7 +99,7 @@ while True:
     cv2.putText(frame, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), (10, 90),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
-    cv2.imshow("Age-Gender", frame)
+    cv2.imshow("Age-Gender-Mood Detection", frame)
 
     key = cv2.waitKey(1)
     if key == ord('q'):
