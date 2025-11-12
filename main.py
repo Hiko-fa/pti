@@ -99,7 +99,7 @@ while True:
     cv2.putText(frame, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), (10, 90),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 2)
 
-    cv2.imshow("Age-Gender-Mood Detection", frame)
+    cv2.imshow("Implementation of Real-Time Age, Gender, and Emotion Detection Using Python and OpenCV", frame)
 
     key = cv2.waitKey(1)
     if key == ord('q'):
