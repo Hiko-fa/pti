@@ -5,11 +5,9 @@ import winsound
 import numpy as np
 from collections import deque
 
-# ------- AGE SMOOTHING BUFFER --------
 AGE_BUFFER = deque(maxlen=15)
 
 def smooth_age(age_raw):
-    """Konversi label age → angka → rata-rata → kembali ke label"""
     age_ranges = {
         '(0-2)': (0, 2),
         '(4-6)': (4, 6),
@@ -27,7 +25,6 @@ def smooth_age(age_raw):
 
     avg = np.mean(AGE_BUFFER)
 
-    # Kalibrasi agar lebih realistis
     if avg <= 18:
         avg *= 0.90
     elif avg >= 25:
@@ -39,22 +36,16 @@ def smooth_age(age_raw):
 
     return age_raw
 
-
-# ------- AGE LOCK SYSTEM -------
 AGE_LOCKED = None
 AGE_STABLE_COUNT = 0
 AGE_STABLE_THRESHOLD = 10
 LAST_AGE_PRED = None
 
-# ------- MOOD LOCK SYSTEM -------
 MOOD_LOCKED = None
-# -----------------------------------------------------------
-
 
 def drawText(img, text, pos, font_scale=0.8, color=(255,255,255)):
     cv2.putText(img, text, pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0,0,0), 4, cv2.LINE_AA)
     cv2.putText(img, text, pos, cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, 2, cv2.LINE_AA)
-
 
 def faceBox(faceNet, frame):
     frameHeight = frame.shape[0]
@@ -75,8 +66,6 @@ def faceBox(faceNet, frame):
 
     return frame, bbox
 
-
-# Load Model
 faceProto = "opencv_face_detector.pbtxt"
 faceModel = "opencv_face_detector_uint8.pb"
 ageProto = "age_deploy.prototxt"
@@ -111,14 +100,12 @@ while True:
 
     frame, bboxs = faceBox(faceNet, frame)
 
-    # RESET jika tidak ada wajah
     if len(bboxs) == 0:
         AGE_LOCKED = None
         AGE_STABLE_COUNT = 0
         LAST_AGE_PRED = None
         MOOD_LOCKED = None
 
-    # Beep jika jumlah wajah berubah
     if len(bboxs) != last_face_count:
         winsound.Beep(1000, 200)
         last_face_count = len(bboxs)
@@ -131,15 +118,12 @@ while True:
 
         blob = cv2.dnn.blobFromImage(face, 1.0, (227, 227), MODEL_MEAN_VALUES, swapRB=False)
 
-        # Gender Prediction
         genderNet.setInput(blob)
         gender = genderList[genderNet.forward()[0].argmax()]
 
-        # Age Prediction
         ageNet.setInput(blob)
         age_raw = ageList[ageNet.forward()[0].argmax()]
 
-        # ------ AGE LOCK ------
         if AGE_LOCKED is not None:
             age = AGE_LOCKED
         else:
@@ -155,31 +139,21 @@ while True:
                 AGE_LOCKED = age_smoothed
 
             age = age_smoothed
-        # ------------------------------------
 
-        # ------ MOOD LOCK SYSTEM ------
         if MOOD_LOCKED is None:
             MOOD_LOCKED = moodList[int(time.time()) % len(moodList)]
         mood = MOOD_LOCKED
-        # --------------------------------
 
-        # ------------------- DRAW TEXT -------------------
-        # Baris 1 → Gender + Age
         drawText(frame, f"{gender}, {age}", (bbox[0], bbox[1]-10), 0.8)
 
-        # Baris 2 → Mood
         drawText(frame, f"{mood}", (bbox[0], bbox[1]+20), 0.8, (0, 255, 255))
-        # ---------------------------------------------------
 
-        # Bounding Box
         color = (255, 100, 0) if gender == 'Laki-laki' else (255, 0, 200)
         cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), color, 3)
 
-        # Warning jika terlalu dekat
         if (bbox[2] - bbox[0]) > 250:
             drawText(frame, "Terlalu Dekat!", (bbox[0], bbox[3]+30), 0.9, (0, 0, 255))
 
-    # Info UI
     drawText(frame, f"Faces: {len(bboxs)} | Total: {total_faces_detected}", (10, 30), 0.9, (0,255,255))
     drawText(frame, f"FPS: {int(fps)}", (10, 60), 0.9, (0,255,0))
     drawText(frame, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), (10, 90), 0.8)
